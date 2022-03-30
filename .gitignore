@@ -1,0 +1,13 @@
+*.class
+*.log
+*.lock
+*.iml
+
+# Package Files #
+*.jar
+*.war
+*.ear
+
+# Result Files #
+out/
+.idea/
