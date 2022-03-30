@@ -7,7 +7,8 @@ import java.util.Vector;
 /**
  * Created on 2022/2/2 20:35.
  * 用了git控制版本
- * idea中记成了git修改。
+ * idea中记成了git修改.
+ * 在dev分支中进行开发，开发完成后合并到master。
  * @author Peng Xin
  * @version 1.0
  */
