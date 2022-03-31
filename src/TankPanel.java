@@ -9,6 +9,7 @@ import java.util.Vector;
  * 用了git控制版本
  * idea中记成了git修改.
  * 在dev分支中进行开发，开发完成后合并到master。
+ * 2022.3.30 实现敌方坦克消失的功能。
  * @author Peng Xin
  * @version 1.0
  */
@@ -36,10 +37,18 @@ public class TankPanel extends JPanel implements KeyListener, Runnable{
             // 建立敌方坦克并加入敌方坦克集合
             Tank enemyTank = new Tank(i * 100,100, Orientation.DOWN,10,Color.CYAN,1);
             enemyTanks.add(enemyTank);
-            // 建立敌方坦克的子弹同时建立子进程计算每颗子弹的位置，并加入敌方坦克子弹集合，以便于后面通过子进程遍历重绘
-            Bullet enemyTankBullet = new Bullet(enemyTank);
+
+            // 敌方坦克发射子弹 可以不用vector来管理子弹
+            // 每个坦克发射子弹时调用shot方法，该方法建立新的子弹后会启动新的子线程。
+            enemyTank.shot();
+
+
+            // 建立敌方坦克的子弹同时建立子进程计算每颗子弹的位置，并加入敌方坦克子弹集合
+            // 因为每个坦克可能有不止一颗子弹，所以需要用数组管理
+            // 以便于后面通过子进程遍历重绘
+            /*Bullet enemyTankBullet = new Bullet(enemyTank);
             enemyTank.getBullets().add(enemyTankBullet);
-            new Thread(enemyTankBullet).start();
+            new Thread(enemyTankBullet).start();*/
         }
     }
 
@@ -52,6 +61,12 @@ public class TankPanel extends JPanel implements KeyListener, Runnable{
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
+            if(hero.getBullet() != null && hero.getBullet().isLive){
+                for(int i = 0; i < enemyTanks.size(); i++){
+                    // 令子弹与每一个坦克进行碰撞检测，同时处理
+                    hero.getBullet().hitTank(enemyTanks.get(i));
+                }
+            }
             this.repaint();
         }
     }
@@ -63,20 +78,23 @@ public class TankPanel extends JPanel implements KeyListener, Runnable{
         drawTank(hero, g);
 
         // 画出子弹 因为要不停地重绘，这里要用子线程实现。
+        /*if(hero.getBullet().inRange())
+            drawBullet(hero.getBullet(), g);*/
+        // 画出子弹，因为英雄坦克可能也有很多的子弹，所以这里是用这个
         for(int i = 0; i < hero.getBullets().size(); i++){
             Bullet heroBullet = hero.getBullets().get(i);
             if(heroBullet.inRange())
                 drawBullet(heroBullet, g);
             else hero.getBullets().remove(heroBullet);
         }
-        /*if(hero.getBullet() != null && hero.getBullet().inRange())
-            drawBullet(hero.getBullet(), g);    // 这里刚开始没有子弹的。*/
 
         // 画出敌方坦克 和 敌方坦克的子弹
         for (int i = 0; i < enemyTanks.size(); i++) {
-            // 画出敌方坦克
+            // 生成并画出敌方存活的坦克
             Tank enemyTank = enemyTanks.get(i);
-            drawTank(enemyTank, g);
+            if(enemyTank.isLive)
+                drawTank(enemyTank, g);
+
             // 画出坦克的所有子弹
             for(int j = 0; j < enemyTank.getBullets().size(); j++) {
                 Bullet enemyTankBullet = enemyTank.getBullets().get(j);
@@ -85,7 +103,6 @@ public class TankPanel extends JPanel implements KeyListener, Runnable{
                 else enemyTank.getBullets().remove(enemyTankBullet);
             }
         }
-        // drawBall(ball, g);
     }
     public void drawTank(Tank tank, Graphics g){
         // 设置画笔颜色
@@ -124,12 +141,6 @@ public class TankPanel extends JPanel implements KeyListener, Runnable{
                 break;
         }
     }
-    public void  drawBall(Ball ball, Graphics g){
-        // 设置画笔颜色
-        g.setColor(ball.getColor());
-        // 绘制球
-        g.fillOval(ball.getX(), ball.getY(),ball.WIDTH, ball.HEIGHT);
-    }
     public void drawBullet(Bullet bullet, Graphics g){
         if(bullet == null) return;
         g.setColor(bullet.getColor());
@@ -161,11 +172,12 @@ public class TankPanel extends JPanel implements KeyListener, Runnable{
                 // 我方英雄发射子弹，用子线程处理。
                 // 需要MyPanel不停重绘子弹
                 // 当子弹移动到面板边界时，销毁该线程。
+                // shot()方法中启动了子弹线程
                 hero.shot();
-                System.out.println("英雄坦克子弹个数：" + hero.getBullets().size());
-                for (int i = 0; i < hero.getBullets().size(); i++) {
+                // System.out.println("英雄坦克子弹个数：" + hero.getBullets().size());
+                /*for (int i = 0; i < hero.getBullets().size(); i++) {
                     new Thread(hero.getBullets().get(i)).start();
-                }
+                }*/
                 this.repaint();
                 break;
             default:

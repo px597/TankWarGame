@@ -13,12 +13,14 @@ import java.util.Vector;
 public class Tank{
 
     private int x, y;               // 设置坦克基点
+    private final int Width = 40, Height = 50;  // 坦克的长宽高。
     private Orientation orientation;// 朝向
     private int speed;              //移动速度
     private Color color;            //颜色
     private int survive;            //生命值
     private Bullet bullet = null;   //子弹 敌人的坦克可以有多颗子弹
     private Vector<Bullet> bullets = new Vector<>();   //子弹 敌人的坦克可以有多颗子弹
+    public boolean isLive = true;   // 坦克是否存活
 
     public Tank(int x, int y, Orientation orientation, int speed, Color color, int survive) {
         this.x = x;
@@ -85,6 +87,12 @@ public class Tank{
         this.bullets = bullets;
     }
 
+    public int getWidth(){
+        return this.Width;
+    }
+    public int getHeight(){
+        return this.Height;
+    }
     // 移动，且改变朝向
     public void setSpeed(int speed) {
         this.speed = speed;
@@ -131,6 +139,7 @@ public class Tank{
         }
         bullets.add(bullet);
         // 启动子线程 进入run方法中去 本子线程只用来计算一颗子弹的位置
+        // shot方法其实可以避免将子弹作为vector管理，因为不管是敌方坦克还是我方坦克，shot时都会启动一个子线程。
         new Thread(bullet).start();
     }
 }

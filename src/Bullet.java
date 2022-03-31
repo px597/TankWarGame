@@ -15,6 +15,7 @@ public class Bullet implements Runnable{
     private Orientation orientation;
     private final int radian = 5;
     private final Color color = Color.BLACK;
+    public boolean isLive = true;  // 子弹是否还存在
 
     // 直接的构造函数，应该有一个根据坦克当前的位置和姿态直接生成的构造器
     public Bullet(int x, int y,  Orientation orientation) {
@@ -67,6 +68,12 @@ public class Bullet implements Runnable{
                 e.printStackTrace();
             }
             this.fly();
+
+            if(this.inRange() && this.isLive){
+                // 遍历敌人所有的坦克
+
+            }
+
             System.out.println("子弹 " + x + " " + y);
         }
         System.out.println("子弹出界，线程退出："+ Thread.currentThread().getName());
@@ -121,6 +128,33 @@ public class Bullet implements Runnable{
                 x += speed;
                 break;
             default:
+                break;
+        }
+    }
+
+    // 判断子弹是否击中坦克，感觉应该放在子弹类下
+    // 子弹在创建后通过子线程执行，计算当前位置，同时判断当前子弹是否与对方坦克发生碰撞，发生碰撞对方就消失。
+    public void hitTank( Tank tank){
+        switch (tank.getOrientation()){
+            case UP:
+            case DOWN:
+                // 朝上与朝下都可以按照此规则判断。
+                if(this.getX() >= tank.getX() && this.getX() <= tank.getX() + tank.getWidth() &&
+                        this.getY() >= tank.getY() && this.getY() <= tank.getY() + tank.getHeight()){
+                    // 击中就是让坦克消失。
+                    this.isLive = false;
+                    tank.isLive = false;
+                }
+                break;
+            case LEFT:
+            case RIGHT:
+                //朝左与朝右按此规则判断。
+                if(this.getX() >= tank.getX() && this.getX() <= tank.getX() + tank.getHeight() &&
+                        this.getY() >= tank.getY() && this.getY() <= tank.getY() + tank.getWidth()){
+                    // 击中就是让坦克消失。
+                    this.isLive = false;
+                    tank.isLive = false;
+                }
                 break;
         }
     }
