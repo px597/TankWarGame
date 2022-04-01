@@ -1,7 +1,8 @@
-import javax.swing.*;
+
 import java.awt.*;
-import java.awt.geom.Rectangle2D;
 import java.util.Vector;
+
+import static java.lang.Thread.sleep;
 
 /**
  * Created on 2022/2/2 20:02.
@@ -10,12 +11,12 @@ import java.util.Vector;
  * @version 1.0
  */
 // tank基类
-public class Tank{
+public class Tank implements Runnable{
 
     private int x, y;               // 设置坦克基点
     private final int Width = 40, Height = 50;  // 坦克的长宽高。
     private Orientation orientation;// 朝向
-    private int speed;              //移动速度
+    private int speed = 5;         //移动速度, 初始化为10
     private Color color;            //颜色
     private int survive;            //生命值
     private Bullet bullet = null;   //子弹 敌人的坦克可以有多颗子弹
@@ -23,11 +24,10 @@ public class Tank{
     public boolean isLive = true;   // 坦克是否存活
     private Bomb bomb = null;       // 自己坦克的爆炸场景，初始化为空
 
-    public Tank(int x, int y, Orientation orientation, int speed, Color color, int survive) {
+    public Tank(int x, int y, Orientation orientation, Color color, int survive) {
         this.x = x;
         this.y = y;
         this.orientation = orientation;
-        this.speed = speed;
         this.color = color;
         this.survive = survive;
     }
@@ -100,19 +100,27 @@ public class Tank{
     }
     public void moveUp(){
         this.orientation = Orientation.UP;
-        this.y -= this.speed;
+        if(this.y > 0){
+            this.y -= this.speed;
+        }
     }
     public void moveDown(){
         this.orientation = Orientation.DOWN;
-        this.y += this.speed;
+        if(this.y + this.Height < TankWarGame.HEIGHT) {
+            this.y += this.speed;
+        }
     }
     public void moveLeft(){
         this.orientation = Orientation.LEFT;
-        this.x -= this.speed;
+        if(this.x > 0) {
+            this.x -= this.speed;
+        }
     }
     public void moveRight(){
         this.orientation = Orientation.RIGHT;
-        this.x += this.speed;
+        if(this.x + this.Height < TankWarGame.WIDTH) {
+            this.x += this.speed;
+        }
     }
 
     // 炸弹
@@ -152,5 +160,60 @@ public class Tank{
         // 启动子线程 进入run方法中去 本子线程只用来计算一颗子弹的位置
         // shot方法其实可以避免将子弹作为vector管理，因为不管是敌方坦克还是我方坦克，shot时都会启动一个子线程。
         new Thread(bullet).start();
+    }
+
+    public void randomMove(){
+        switch (this.orientation){
+            case UP:
+                moveUp();
+                break;
+            case DOWN:
+                moveDown();
+                break;
+            case LEFT:
+                moveLeft();
+                break;
+            case RIGHT:
+                moveRight();
+                break;
+        }
+    }
+
+    public void randomDirection(){
+        // 随机改变方向
+        switch ((int)(Math.random() * 4)){
+            case 0:
+                setOrientation(Orientation.UP);
+                break;
+            case 1:
+                setOrientation(Orientation.DOWN);
+                break;
+            case 2:
+                setOrientation(Orientation.LEFT);
+                break;
+            case 3:
+                setOrientation(Orientation.RIGHT);
+                break;
+        }
+    }
+    public boolean inRange(){
+        return (getX() > 0 && x < TankWarGame.WIDTH && y > 0 && y < TankWarGame.HEIGHT);
+    }
+    // 敌方坦克随机移动的子线程，坦克被击中则退出线程
+    @Override
+    public void run() {
+        while(this.isLive) {
+            // 随机移动10 - 20步
+            for (int i = 0; i < Math.max(10, Math.random() * 20); i++) {
+                randomMove();
+                try {
+                    sleep(50);
+                }catch(Exception e){
+                    e.printStackTrace();
+                }
+            }
+            randomDirection();
+        }
+        System.out.println("敌方坦克随机移动线退出：" + Thread.currentThread().getName());
     }
 }

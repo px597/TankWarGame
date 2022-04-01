@@ -2,7 +2,6 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
-import java.util.Timer;
 import java.util.Vector;
 
 /**
@@ -24,23 +23,23 @@ import java.util.Vector;
 public class TankPanel extends JPanel implements KeyListener, Runnable{
     // 先创建一个球，实际上这里感觉应该是一个工厂来创建的
     Tank hero = null;
-    Vector<Tank> enemyTanks = new Vector<>();
 
-    // 炸弹数组，当子弹击中坦克时播放 用vector管理主要是需要在paint方法中绘制
-    // 但是实际上每个坦克都会有一个bomb，所以可以不同vector管理
-    Vector<Bomb> bombs = new Vector<>();
+    // 敌方坦克和炸弹数组，这里都用数组来管理，好处是绘制时方便遍历
+    Vector<Tank> enemyTanks = new Vector<>();
     int enemySize = 5;
+    Vector<Bomb> bombs = new Vector<>();
 
     // 面板构造函数，可以在里面放置一些初始化的内容；
     public TankPanel(){
         // 生成我方坦克
-        hero = new Tank(100,400, Orientation.UP,10,Color.yellow,1);
+        hero = new Tank(100,400, Orientation.UP,Color.yellow,1);
         // 生成敌方坦克，敌方坦克出生时要生成子弹
         for(int i = 0; i < enemySize; i++){
             // 建立敌方坦克并加入敌方坦克集合
-            Tank enemyTank = new Tank(i * 100,100, Orientation.DOWN,10,Color.CYAN,1);
-            enemyTanks.add(enemyTank);
+            Tank enemyTank = new Tank(i * 100,100, Orientation.DOWN,Color.CYAN,1);
+            new Thread(enemyTank).start();
 
+            enemyTanks.add(enemyTank);
             // 敌方坦克发射子弹 可以不用vector来管理子弹
             // 每个坦克发射子弹时调用shot方法，该方法建立新的子弹后会启动新的子线程。
             enemyTank.shot();
@@ -56,18 +55,14 @@ public class TankPanel extends JPanel implements KeyListener, Runnable{
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
+
+            // 令我方子弹与每一个坦克进行碰撞检测
             if(hero.getBullet() != null && hero.getBullet().isLive){
                 for(int i = 0; i < enemyTanks.size(); i++){
-                    // 令我方子弹与每一个坦克进行碰撞检测
-                    // 击中则不再绘制，同时从数组中除去。
-                    // 这里一旦子弹击中了坦克，则下面会将该坦克从坦克数组中删除
-                    // 然后panel中的paint方法绘制炸弹是遍历数组中的每个坦克，可能遍历不到
-                    // 所以其实这里坦克、子弹和爆炸图像统一数组管理的原因就是让这几个元素在绘制时脱钩，避免干扰
-                    // 横向管理。
                     hero.getBullet().hitTank(enemyTanks.get(i));
                     // 敌方坦克被击中则生成炮弹，并加入数组中
                     if(!enemyTanks.get(i).isLive){
-                        System.out.println("敌方坦克被击中");
+                        //System.out.println("敌方坦克被击中");
                         enemyTanks.get(i).setBomb();
                         bombs.add(enemyTanks.get(i).getBomb());
                         enemyTanks.remove(i);
@@ -81,10 +76,12 @@ public class TankPanel extends JPanel implements KeyListener, Runnable{
     @Override
     public void paint(Graphics g) {
         super.paint(g);
+        g.fillRect(0,0, TankWarGame.WIDTH, TankWarGame.HEIGHT);
+
         //画出我方坦克 以及炸弹 如果有的话
         drawTank(hero, g);
         if(hero.getBomb() != null && hero.getBomb().isLive()) {
-            System.out.println("我方坦克爆炸");
+            //System.out.println("我方坦克爆炸");
             drawBomb(hero.getBomb(), g);
         }
 
@@ -198,6 +195,7 @@ public class TankPanel extends JPanel implements KeyListener, Runnable{
                 hero.moveUp();
                 break;
             case KeyEvent.VK_S:
+                System.out.println(hero.getY());
                 hero.moveDown();
                 break;
             case KeyEvent.VK_A:

@@ -27,12 +27,12 @@ public class TankWarGame extends JFrame {
         repaintThread.start();
 
         this.add(tankPanel);
-        this.setSize(WIDTH, HEIGHT);
+        this.setSize(WIDTH + 100 , HEIGHT + 100);
         this.setVisible(true);
 
+        this.setResizable(false);
         // 此面板监听键盘事件，即只有选中了本面板之后的按键响应才有效。
         this.addKeyListener(tankPanel);
-
         // 设置点击窗口关闭按钮时程序退出。
         this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
     }
