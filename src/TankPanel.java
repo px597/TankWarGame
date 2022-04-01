@@ -33,16 +33,13 @@ public class TankPanel extends JPanel implements KeyListener, Runnable{
     public TankPanel(){
         // 生成我方坦克
         hero = new Tank(100,400, Orientation.UP,Color.yellow,1);
-        // 生成敌方坦克，敌方坦克出生时要生成子弹
+        // 生成敌方坦克
         for(int i = 0; i < enemySize; i++){
             // 建立敌方坦克并加入敌方坦克集合
             Tank enemyTank = new Tank(i * 100,100, Orientation.DOWN,Color.CYAN,1);
             new Thread(enemyTank).start();
 
             enemyTanks.add(enemyTank);
-            // 敌方坦克发射子弹 可以不用vector来管理子弹
-            // 每个坦克发射子弹时调用shot方法，该方法建立新的子弹后会启动新的子线程。
-            enemyTank.shot();
         }
     }
 
@@ -69,6 +66,20 @@ public class TankPanel extends JPanel implements KeyListener, Runnable{
                     }
                 }
             }
+
+            // 判断敌方坦克的子弹是否击中我方坦克
+            if(hero.isLive) {
+                for (int i = 0; i < enemyTanks.size(); i++) {
+                    Tank enemyTank = enemyTanks.get(i);
+                    for (int j = 0; j < enemyTank.getBullets().size(); j++) {
+                        enemyTank.getBullets().get(j).hitTank(hero);
+                        if (!hero.isLive) {
+                            System.out.println("我方坦克被击中");
+                            hero.setBomb();
+                        }
+                    }
+                }
+            }
             this.repaint();
         }
     }
@@ -79,22 +90,22 @@ public class TankPanel extends JPanel implements KeyListener, Runnable{
         g.fillRect(0,0, TankWarGame.WIDTH, TankWarGame.HEIGHT);
 
         //画出我方坦克 以及炸弹 如果有的话
-        drawTank(hero, g);
+        if(hero.isLive)
+            drawTank(hero, g);
         if(hero.getBomb() != null && hero.getBomb().isLive()) {
-            //System.out.println("我方坦克爆炸");
+            System.out.println("我方坦克爆炸");
             drawBomb(hero.getBomb(), g);
         }
 
-        // 画出子弹 因为要不停地重绘，这里要用子线程实现。
-        /*if(hero.getBullet().inRange())
-            drawBullet(hero.getBullet(), g);*/
         // 画出子弹，因为英雄坦克可能也有很多的子弹，所以这里是用这个
-        for(int i = 0; i < hero.getBullets().size(); i++) {
-            Bullet heroBullet = hero.getBullets().get(i);
-            // 如果英雄的子弹击中敌方坦克或者超出范围，就不画出来
-            if(heroBullet.isLive && heroBullet.inRange())
-                drawBullet(heroBullet, g);
-            else hero.getBullets().remove(heroBullet);
+        if(hero.isLive) {
+            for (int i = 0; i < hero.getBullets().size(); i++) {
+                Bullet heroBullet = hero.getBullets().get(i);
+                // 如果英雄的子弹击中敌方坦克或者超出范围，就不画出来
+                if (heroBullet.isLive && heroBullet.inRange())
+                    drawBullet(heroBullet, g);
+                else hero.getBullets().remove(heroBullet);
+            }
         }
 
         // 画出敌方坦克 和 敌方坦克的子弹
@@ -107,7 +118,7 @@ public class TankPanel extends JPanel implements KeyListener, Runnable{
             // 画出坦克的所有子弹
             for(int j = 0; j < enemyTank.getBullets().size(); j++) {
                 Bullet enemyTankBullet = enemyTank.getBullets().get(j);
-                if (enemyTankBullet.inRange())   // 子弹在范围内就绘制，不在范围内就要移除出去。
+                if (enemyTankBullet.isLive && enemyTankBullet.inRange())   // 子弹在范围内就绘制，不在范围内就要移除出去。
                     drawBullet(enemyTankBullet, g);
                 else enemyTank.getBullets().remove(enemyTankBullet);
             }
@@ -117,7 +128,6 @@ public class TankPanel extends JPanel implements KeyListener, Runnable{
         for(int j = 0; j < bombs.size(); j++)
         {
             Bomb bomb = bombs.get(j);
-            System.out.println("敌方坦克爆炸");
             if(bomb.isLive())
                 drawBomb(bomb, g);
         }

@@ -61,7 +61,7 @@ public class Bullet implements Runnable{
 
     @Override
     public void run() {
-        // 子弹击中敌方坦克或者超出边界就退出。
+        // 子弹击中敌方坦克或者超出边界就退出，并设为消亡状态
         while( this.isLive && this.inRange()){
             try {
                 sleep(50);
@@ -69,9 +69,10 @@ public class Bullet implements Runnable{
                 e.printStackTrace();
             }
             this.fly();
-            System.out.println("子弹 " +getX() + " " + getY());
+            //System.out.println("子弹 " +getX() + " " + getY());
         }
-        System.out.println("子弹出界，线程退出："+ Thread.currentThread().getName());
+        this.isLive = false;
+        //System.out.println("子弹出界，线程退出："+ Thread.currentThread().getName());
     }
 
     public int getX() {

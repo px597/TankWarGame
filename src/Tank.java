@@ -134,6 +134,8 @@ public class Tank implements Runnable{
 
     //射击行为，生成子弹并移动
     public void shot(){
+        // 若当前坦克没有子弹
+        if(this.getBullet() != null && this.getBullet().isLive) return;
         //根据坦克当前的朝向生成子弹，并让子弹飞行
         // if(bullet != null ) return; // 子弹存在时，不管。
         switch (orientation){
@@ -203,7 +205,10 @@ public class Tank implements Runnable{
     @Override
     public void run() {
         while(this.isLive) {
-            // 随机移动10 - 20步
+            // 在一定概率下随机发射子弹，再随机移动10 - 20步,
+            // 因为坦克发射子弹时根据当前的方向发射的，所以每次先发射再移动，看起来会和坦克朝向连贯
+            if(Math.random() > 0.8)
+                this.shot();
             for (int i = 0; i < Math.max(10, Math.random() * 20); i++) {
                 randomMove();
                 try {
