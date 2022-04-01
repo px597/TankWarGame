@@ -5,7 +5,7 @@ import java.util.Vector;
 
 /**
  * Created on 2022/2/2 20:02.
- *
+ * 2022.3.31 实现坦克被击中时的消亡功能
  * @author Peng Xin
  * @version 1.0
  */
@@ -21,6 +21,7 @@ public class Tank{
     private Bullet bullet = null;   //子弹 敌人的坦克可以有多颗子弹
     private Vector<Bullet> bullets = new Vector<>();   //子弹 敌人的坦克可以有多颗子弹
     public boolean isLive = true;   // 坦克是否存活
+    private Bomb bomb = null;       // 自己坦克的爆炸场景，初始化为空
 
     public Tank(int x, int y, Orientation orientation, int speed, Color color, int survive) {
         this.x = x;
@@ -113,6 +114,16 @@ public class Tank{
         this.orientation = Orientation.RIGHT;
         this.x += this.speed;
     }
+
+    // 炸弹
+    public void setBomb() {
+        bomb = new Bomb(this);
+    }
+
+    public Bomb getBomb() {
+        return bomb;
+    }
+
     //射击行为，生成子弹并移动
     public void shot(){
         //根据坦克当前的朝向生成子弹，并让子弹飞行

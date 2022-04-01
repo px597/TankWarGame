@@ -2,6 +2,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
+import java.util.Timer;
 import java.util.Vector;
 
 /**
@@ -22,10 +23,12 @@ import java.util.Vector;
 // 根据按下去的不同的按键，处理对应的移动和射击关系。
 public class TankPanel extends JPanel implements KeyListener, Runnable{
     // 先创建一个球，实际上这里感觉应该是一个工厂来创建的
-    Ball ball = null;
     Tank hero = null;
-
     Vector<Tank> enemyTanks = new Vector<>();
+
+    // 炸弹数组，当子弹击中坦克时播放 用vector管理主要是需要在paint方法中绘制
+    // 但是实际上每个坦克都会有一个bomb，所以可以不同vector管理
+    Vector<Bomb> bombs = new Vector<>();
     int enemySize = 5;
 
     // 面板构造函数，可以在里面放置一些初始化的内容；
@@ -41,14 +44,6 @@ public class TankPanel extends JPanel implements KeyListener, Runnable{
             // 敌方坦克发射子弹 可以不用vector来管理子弹
             // 每个坦克发射子弹时调用shot方法，该方法建立新的子弹后会启动新的子线程。
             enemyTank.shot();
-
-
-            // 建立敌方坦克的子弹同时建立子进程计算每颗子弹的位置，并加入敌方坦克子弹集合
-            // 因为每个坦克可能有不止一颗子弹，所以需要用数组管理
-            // 以便于后面通过子进程遍历重绘
-            /*Bullet enemyTankBullet = new Bullet(enemyTank);
-            enemyTank.getBullets().add(enemyTankBullet);
-            new Thread(enemyTankBullet).start();*/
         }
     }
 
@@ -63,8 +58,20 @@ public class TankPanel extends JPanel implements KeyListener, Runnable{
             }
             if(hero.getBullet() != null && hero.getBullet().isLive){
                 for(int i = 0; i < enemyTanks.size(); i++){
-                    // 令子弹与每一个坦克进行碰撞检测，同时处理
+                    // 令我方子弹与每一个坦克进行碰撞检测
+                    // 击中则不再绘制，同时从数组中除去。
+                    // 这里一旦子弹击中了坦克，则下面会将该坦克从坦克数组中删除
+                    // 然后panel中的paint方法绘制炸弹是遍历数组中的每个坦克，可能遍历不到
+                    // 所以其实这里坦克、子弹和爆炸图像统一数组管理的原因就是让这几个元素在绘制时脱钩，避免干扰
+                    // 横向管理。
                     hero.getBullet().hitTank(enemyTanks.get(i));
+                    // 敌方坦克被击中则生成炮弹，并加入数组中
+                    if(!enemyTanks.get(i).isLive){
+                        System.out.println("敌方坦克被击中");
+                        enemyTanks.get(i).setBomb();
+                        bombs.add(enemyTanks.get(i).getBomb());
+                        enemyTanks.remove(i);
+                    }
                 }
             }
             this.repaint();
@@ -74,16 +81,21 @@ public class TankPanel extends JPanel implements KeyListener, Runnable{
     @Override
     public void paint(Graphics g) {
         super.paint(g);
-        //画出我方坦克
+        //画出我方坦克 以及炸弹 如果有的话
         drawTank(hero, g);
+        if(hero.getBomb() != null && hero.getBomb().isLive()) {
+            System.out.println("我方坦克爆炸");
+            drawBomb(hero.getBomb(), g);
+        }
 
         // 画出子弹 因为要不停地重绘，这里要用子线程实现。
         /*if(hero.getBullet().inRange())
             drawBullet(hero.getBullet(), g);*/
         // 画出子弹，因为英雄坦克可能也有很多的子弹，所以这里是用这个
-        for(int i = 0; i < hero.getBullets().size(); i++){
+        for(int i = 0; i < hero.getBullets().size(); i++) {
             Bullet heroBullet = hero.getBullets().get(i);
-            if(heroBullet.inRange())
+            // 如果英雄的子弹击中敌方坦克或者超出范围，就不画出来
+            if(heroBullet.isLive && heroBullet.inRange())
                 drawBullet(heroBullet, g);
             else hero.getBullets().remove(heroBullet);
         }
@@ -102,6 +114,15 @@ public class TankPanel extends JPanel implements KeyListener, Runnable{
                     drawBullet(enemyTankBullet, g);
                 else enemyTank.getBullets().remove(enemyTankBullet);
             }
+        }
+
+        // 画出爆炸图像 爆炸图像是单独管理的，所以和敌方坦克无关。
+        for(int j = 0; j < bombs.size(); j++)
+        {
+            Bomb bomb = bombs.get(j);
+            System.out.println("敌方坦克爆炸");
+            if(bomb.isLive())
+                drawBomb(bomb, g);
         }
     }
     public void drawTank(Tank tank, Graphics g){
@@ -145,6 +166,23 @@ public class TankPanel extends JPanel implements KeyListener, Runnable{
         if(bullet == null) return;
         g.setColor(bullet.getColor());
         g.fillOval(bullet.getX(), bullet.getY(), bullet.getRadian(), bullet.getRadian());
+    }
+    public void drawBomb(Bomb bomb, Graphics g){
+        if(bomb.getLife() > 6){
+            g.drawImage(bomb.getImage01(), bomb.getX(), bomb.getY(), 60, 60, this);
+        }
+        else if(bomb.getLife() > 3){
+            g.drawImage(bomb.getImage02(), bomb.getX(), bomb.getY(), 60, 60, this);
+        }
+        else if(bomb.getLife() > 0){
+            g.drawImage(bomb.getImage03(), bomb.getX(), bomb.getY(), 60, 60, this);
+        }
+        else if(bomb.getLife() == 0)    // 炸弹生命值 = 0 则从数组中删除
+        {
+            bomb.setLive(false);
+            bombs.remove(bomb);
+        }
+        bomb.lifeDown();    // 让炸弹的生命值减少
     }
 
     // 重写监听器的函数

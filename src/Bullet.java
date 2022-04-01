@@ -61,20 +61,15 @@ public class Bullet implements Runnable{
 
     @Override
     public void run() {
-        while(this.inRange()){
+        // 子弹击中敌方坦克或者超出边界就退出。
+        while( this.isLive && this.inRange()){
             try {
                 sleep(50);
             }catch(Exception e){
                 e.printStackTrace();
             }
             this.fly();
-
-            if(this.inRange() && this.isLive){
-                // 遍历敌人所有的坦克
-
-            }
-
-            System.out.println("子弹 " + x + " " + y);
+            System.out.println("子弹 " +getX() + " " + getY());
         }
         System.out.println("子弹出界，线程退出："+ Thread.currentThread().getName());
     }
@@ -134,7 +129,7 @@ public class Bullet implements Runnable{
 
     // 判断子弹是否击中坦克，感觉应该放在子弹类下
     // 子弹在创建后通过子线程执行，计算当前位置，同时判断当前子弹是否与对方坦克发生碰撞，发生碰撞对方就消失。
-    public void hitTank( Tank tank){
+    public void hitTank(Tank tank){
         switch (tank.getOrientation()){
             case UP:
             case DOWN:
@@ -142,6 +137,8 @@ public class Bullet implements Runnable{
                 if(this.getX() >= tank.getX() && this.getX() <= tank.getX() + tank.getWidth() &&
                         this.getY() >= tank.getY() && this.getY() <= tank.getY() + tank.getHeight()){
                     // 击中就是让坦克消失。
+                    // 坦克被击中后还要从敌方坦克的数组中删除，否则只是没有绘制
+                    // 但是还是会留在原地，有新的子弹进入时仍然会判定击中。
                     this.isLive = false;
                     tank.isLive = false;
                 }
