@@ -1,6 +1,7 @@
 
 import javax.print.attribute.standard.MediaSize;
 import java.awt.*;
+import java.io.Serializable;
 import java.util.Objects;
 import java.util.Vector;
 
@@ -9,11 +10,12 @@ import static java.lang.Thread.sleep;
 /**
  * Created on 2022/2/2 20:02.
  * 2022.3.31 实现坦克被击中时的消亡功能
+ * 2022.4.6 实现坦克不重叠的功能
  * @author Peng Xin
  * @version 1.0
  */
 // tank基类
-public class Tank implements Runnable{
+public class Tank implements Runnable, Serializable {
 
     private int x, y;               // 设置坦克基点
     private final int Width = 40, Height = 50;  // 坦克的长宽高。
@@ -120,7 +122,7 @@ public class Tank implements Runnable{
         this.orientation = Orientation.DOWN;
         if(this.y + this.Height < TankWarGame.HEIGHT &&
                 !this.canNotMoveOrientations.contains(Orientation.DOWN)) {
-            System.out.println(name + " 向下走 ");
+            //System.out.println(name + " 向下走 ");
             this.y += this.speed;
         }
     }
@@ -128,7 +130,7 @@ public class Tank implements Runnable{
         this.orientation = Orientation.LEFT;
         if(this.x > 0 &&
                 !this.canNotMoveOrientations.contains(Orientation.LEFT)) {
-            System.out.println(name + " 向左走 ");
+            //System.out.println(name + " 向左走 ");
             this.x -= this.speed;
         }
     }
@@ -136,7 +138,7 @@ public class Tank implements Runnable{
         this.orientation = Orientation.RIGHT;
         if(this.x + this.Height < TankWarGame.WIDTH &&
                 !this.canNotMoveOrientations.contains(Orientation.RIGHT)) {
-            System.out.println(name + " 向右走 ");
+            //System.out.println(name + " 向右走 ");
             this.x += this.speed;
         }
     }
@@ -218,36 +220,39 @@ public class Tank implements Runnable{
         }
     }
     public boolean inRange(){
-        return (getX() > 0 && x < TankWarGame.WIDTH && y > 0 && y < TankWarGame.HEIGHT);
+        return (getX() > 0
+                && x < TankWarGame.WIDTH
+                && y > 0
+                && y < TankWarGame.HEIGHT);
     }
     //
     public Vector<Orientation> getCanNotMoveOrientations(){
         return canNotMoveOrientations;
     }
     public void setCanNotMoveOrientations(Tank tank){
-        System.out.print(name + " 与 " + tank.name + "重叠, " + name);
+        //System.out.print(name + " 与 " + tank.name + "重叠, " + name);
         // 对方坦克在我方坦克的左上方
         if(tank.getX() < this.x && tank.getY() < this.y){
-            System.out.println("不能去左上方");
+            //System.out.println("不能去左上方");
             this.canNotMoveOrientations.add(orientation.LEFT);
             this.canNotMoveOrientations.add(orientation.UP);
         }
         // 对方坦克在我方坦克上方
         else if(tank.getX() >= this.x && tank.getY() < this.y){
-            System.out.println("不能去右上方");
+            //System.out.println("不能去右上方");
             this.canNotMoveOrientations.add(orientation.UP);
             this.canNotMoveOrientations.add(orientation.RIGHT);
         }
         // 对方坦克在我方坦克的左边
         else if(tank.getX() < this.x && tank.getY() >= this.y){
-            System.out.println("不能去左下方");
+            //System.out.println("不能去左下方");
             this.canNotMoveOrientations.add(orientation.LEFT);
             this.canNotMoveOrientations.add(orientation.DOWN);
         }
         // 对方坦克在我方坦克的右下方
         else if(tank.getX() >= this.x && tank.getY() >= this.y)
         {
-            System.out.println("不能去右下方");
+            //System.out.println("不能去右下方");
             this.canNotMoveOrientations.add(orientation.DOWN);
             this.canNotMoveOrientations.add(orientation.RIGHT);
         }
@@ -262,16 +267,20 @@ public class Tank implements Runnable{
                     case UP:
                     case DOWN:
                         //会重叠
-                        if(tank.getX() >= x - Width && tank.getX() <= x + Width
-                                && tank.getY() >= y - Height && tank.getY() <= y + Height){
+                        if(tank.getX() >= x - Width
+                                && tank.getX() <= x + Width
+                                && tank.getY() >= y - Height
+                                && tank.getY() <= y + Height){
                             // 根据对方坦克的位置设置我方坦克不能移动的方向
                             setCanNotMoveOrientations(tank);
                         }
                         return;
                     case LEFT:
                     case RIGHT:
-                        if(tank.getX() >= x - Height && tank.getX() <= x + Width
-                                && tank.getY() >= y - Width && tank.getY() <= y + Height){
+                        if(tank.getX() >= x - Height
+                                && tank.getX() <= x + Width
+                                && tank.getY() >= y - Width
+                                && tank.getY() <= y + Height){
                             setCanNotMoveOrientations(tank);
                         }
                         return;
@@ -282,16 +291,20 @@ public class Tank implements Runnable{
                 switch (tank.getOrientation()) {
                     case UP:
                     case DOWN:
-                        if(tank.getX() >= x - Width && tank.getX() <= x + Height
-                                && tank.getY() >= y - Height && tank.getY() <= y + Width){
+                        if(tank.getX() >= x - Width
+                                && tank.getX() <= x + Height
+                                && tank.getY() >= y - Height
+                                && tank.getY() <= y + Width){
                             setCanNotMoveOrientations(tank);
                         }
 
                         return;
                     case LEFT:
                     case RIGHT:
-                        if(tank.getX() >= x - Height && tank.getX() <= x + Height
-                                && tank.getY() >= y - Width && tank.getY() <= y + Width){
+                        if(tank.getX() >= x - Height
+                                && tank.getX() <= x + Height
+                                && tank.getY() >= y - Width
+                                && tank.getY() <= y + Width){
                             setCanNotMoveOrientations(tank);
                         }
                 }
@@ -324,6 +337,7 @@ public class Tank implements Runnable{
 
             // 和友方坦克依次判断是否重叠，并添加canNotMoveOrientations，根据canNotMoveOrientations进行移动，随后清除。
             // 注意：不能在依次判断时清除，否则会造成和1重叠，和3不重叠，但3的判断结果会清除1的结果。
+            // 注意：这里只判断是否重叠返回布尔值，并通过转向来解决重叠问题是一种更简化的方案。
             for (int i = 0; i < Math.max(10, Math.random() * 20); i++) {
                 CheckAllTankCovered(tanks);
                 randomMove();

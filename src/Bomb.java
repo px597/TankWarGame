@@ -1,4 +1,5 @@
 import java.awt.*;
+import java.io.Serializable;
 
 /**
  * Created on 2022/3/31 16:51.
@@ -7,7 +8,7 @@ import java.awt.*;
  * @version 1.0
  */
 
-public class Bomb{
+public class Bomb implements Serializable {
     private int x,y;
     private boolean isLive = true;
     private int life = 9;   // 爆炸效果的生命值

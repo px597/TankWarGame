@@ -2,6 +2,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
+import java.io.*;
 import java.util.Vector;
 
 /**
@@ -22,17 +23,20 @@ import java.util.Vector;
 // 根据按下去的不同的按键，处理对应的移动和射击关系。
 public class TankPanel extends JPanel implements KeyListener, Runnable{
 
-    Tank hero = null;
-    Vector<Tank> allTanks = new Vector<>();     //所有坦克数组
-    Vector<Tank> enemyTanks = new Vector<>();   //敌方坦克数组
-    int enemySize = 4;
-    Vector<Bomb> bombs = new Vector<>();        // 炸弹
+    private Tank hero = null;
+    private Vector<Tank> allTanks = new Vector<>();     //所有坦克数组
+    private Vector<Tank> enemyTanks = new Vector<>();   //敌方坦克数组
+    private int enemySize = 4;
+    private Vector<Bomb> bombs = new Vector<>();        // 炸弹
+
 
     // 面板构造函数，可以在里面放置一些初始化的内容；
-    public TankPanel(){
+    public TankPanel() throws IOException {
+        // 读取配置数据
+        Recorder.restore();
+
         // 生成我方坦克
         hero = new Tank(100,400, Orientation.UP,Color.yellow,1);
-
         hero.setTanks(allTanks);
         allTanks.add(hero);
         // 生成敌方坦克
@@ -67,11 +71,12 @@ public class TankPanel extends JPanel implements KeyListener, Runnable{
                     // 敌方坦克被击中则生成炮弹，并加入数组中
                     if(!enemyTanks.get(i).isLive){
                         //System.out.println("敌方坦克被击中");
+                        Recorder.addShotEnemyTankNumber();
                         enemyTanks.get(i).setBomb();
                         bombs.add(enemyTanks.get(i).getBomb());
 
-                        enemyTanks.remove(i);
-                        allTanks.remove(i);
+                        allTanks.remove(enemyTanks.get(i));
+                        enemyTanks.remove(enemyTanks.get(i));
                     }
                 }
             }
@@ -90,17 +95,29 @@ public class TankPanel extends JPanel implements KeyListener, Runnable{
                     }
                 }
             }
-            //敌方坦克在生成后即在子线程随机移动，在随机移动时要保证坦克之间不能重叠
-            //由于敌方坦克子线程无法得知其他坦克的信息，因此感觉计算时必须在panel中实现
+
             this.repaint();
         }
+    }
+    // 显示计分板
+    public void showInfo(Graphics g){
+        // 绘制Score
+        g.setColor(Color.BLACK);
+        Font infoFont = new Font("Time New Romans", Font.BOLD, 25);
+        g.setFont(infoFont);
+        // 绘制坦克图标
+        g.drawString("Score:", TankWarGame.WIDTH + 25, 25);
+        drawTank(new Tank(TankWarGame.WIDTH + 25,35, Orientation.UP,Color.CYAN,1), g);
+        // 绘制分数
+        g.setColor(Color.BLACK);
+        g.drawString(Integer.toString(Recorder.getShotEnemyTankNumber()), TankWarGame.WIDTH + 25 + 60, 65);
     }
 
     @Override
     public void paint(Graphics g) {
         super.paint(g);
         g.fillRect(0,0, TankWarGame.WIDTH, TankWarGame.HEIGHT);
-
+        showInfo(g);
         //画出我方坦克 以及炸弹 如果有的话
         if(hero.isLive)
             drawTank(hero, g);
@@ -255,5 +272,13 @@ public class TankPanel extends JPanel implements KeyListener, Runnable{
     @Override
     public void keyReleased(KeyEvent e) {
         System.out.println("released: " +e);
+    }
+
+    public Tank getHero() {
+        return hero;
+    }
+
+    public Vector<Tank> getEnemyTanks() {
+        return enemyTanks;
     }
 }

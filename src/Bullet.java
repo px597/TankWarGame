@@ -1,4 +1,5 @@
 import java.awt.*;
+import java.io.Serializable;
 
 import static java.lang.Thread.sleep;
 
@@ -9,7 +10,7 @@ import static java.lang.Thread.sleep;
  * @version 1.0
  */
 
-public class Bullet implements Runnable{
+public class Bullet implements Runnable, Serializable {
     private int x, y;
     private int speed = 20; // 子弹初始速度设置为20
     private Orientation orientation;
