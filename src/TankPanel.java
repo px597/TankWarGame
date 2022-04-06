@@ -21,25 +21,32 @@ import java.util.Vector;
 //    public void keyReleased(KeyEvent e);
 // 根据按下去的不同的按键，处理对应的移动和射击关系。
 public class TankPanel extends JPanel implements KeyListener, Runnable{
-    // 先创建一个球，实际上这里感觉应该是一个工厂来创建的
-    Tank hero = null;
 
-    // 敌方坦克和炸弹数组，这里都用数组来管理，好处是绘制时方便遍历
-    Vector<Tank> enemyTanks = new Vector<>();
-    int enemySize = 5;
-    Vector<Bomb> bombs = new Vector<>();
+    Tank hero = null;
+    Vector<Tank> allTanks = new Vector<>();     //所有坦克数组
+    Vector<Tank> enemyTanks = new Vector<>();   //敌方坦克数组
+    int enemySize = 4;
+    Vector<Bomb> bombs = new Vector<>();        // 炸弹
 
     // 面板构造函数，可以在里面放置一些初始化的内容；
     public TankPanel(){
         // 生成我方坦克
         hero = new Tank(100,400, Orientation.UP,Color.yellow,1);
+
+        hero.setTanks(allTanks);
+        allTanks.add(hero);
         // 生成敌方坦克
         for(int i = 0; i < enemySize; i++){
             // 建立敌方坦克并加入敌方坦克集合
             Tank enemyTank = new Tank(i * 100,100, Orientation.DOWN,Color.CYAN,1);
-            new Thread(enemyTank).start();
+            enemyTank.setName(Integer.toString(i));
 
             enemyTanks.add(enemyTank);
+            allTanks.add(enemyTank);
+
+            enemyTank.setTanks(allTanks);
+
+            new Thread(enemyTank).start();
         }
     }
 
@@ -53,7 +60,7 @@ public class TankPanel extends JPanel implements KeyListener, Runnable{
                 e.printStackTrace();
             }
 
-            // 令我方子弹与每一个坦克进行碰撞检测
+            // 判断敌方坦克是否被击中
             if(hero.getBullet() != null && hero.getBullet().isLive){
                 for(int i = 0; i < enemyTanks.size(); i++){
                     hero.getBullet().hitTank(enemyTanks.get(i));
@@ -62,12 +69,14 @@ public class TankPanel extends JPanel implements KeyListener, Runnable{
                         //System.out.println("敌方坦克被击中");
                         enemyTanks.get(i).setBomb();
                         bombs.add(enemyTanks.get(i).getBomb());
+
                         enemyTanks.remove(i);
+                        allTanks.remove(i);
                     }
                 }
             }
 
-            // 判断敌方坦克的子弹是否击中我方坦克
+            // 判断我方坦克是否被击中
             if(hero.isLive) {
                 for (int i = 0; i < enemyTanks.size(); i++) {
                     Tank enemyTank = enemyTanks.get(i);
@@ -76,10 +85,13 @@ public class TankPanel extends JPanel implements KeyListener, Runnable{
                         if (!hero.isLive) {
                             System.out.println("我方坦克被击中");
                             hero.setBomb();
+                            allTanks.remove(hero);
                         }
                     }
                 }
             }
+            //敌方坦克在生成后即在子线程随机移动，在随机移动时要保证坦克之间不能重叠
+            //由于敌方坦克子线程无法得知其他坦克的信息，因此感觉计算时必须在panel中实现
             this.repaint();
         }
     }
@@ -201,18 +213,26 @@ public class TankPanel extends JPanel implements KeyListener, Runnable{
     public void keyPressed(KeyEvent e) {
         System.out.println("pressed: " + e);
         switch (e.getKeyCode()) {
+            // 移动时首先判断是否重叠，不好确定清除的位置，最好还是重写类
             case KeyEvent.VK_W:
+                hero.CheckAllTankCovered(allTanks);
                 hero.moveUp();
+                hero.getCanNotMoveOrientations().clear();
                 break;
             case KeyEvent.VK_S:
-                System.out.println(hero.getY());
+                hero.CheckAllTankCovered(allTanks);
                 hero.moveDown();
+                hero.getCanNotMoveOrientations().clear();
                 break;
             case KeyEvent.VK_A:
+                hero.CheckAllTankCovered(allTanks);
                 hero.moveLeft();
+                hero.getCanNotMoveOrientations().clear();
                 break;
             case KeyEvent.VK_D:
+                hero.CheckAllTankCovered(allTanks);
                 hero.moveRight();
+                hero.getCanNotMoveOrientations().clear();
                 break;
             case KeyEvent.VK_J:
                 // 我方英雄发射子弹，用子线程处理。
