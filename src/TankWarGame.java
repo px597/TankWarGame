@@ -3,6 +3,7 @@ import javax.swing.*;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.io.*;
+import java.util.Scanner;
 
 /**
  * Created on 2022/2/2 20:02.
@@ -22,9 +23,27 @@ public class TankWarGame extends JFrame {
 
     public static void main(String[] args) throws IOException {
         // 启动坦克大战游戏
+        System.out.println("请选择游戏模式(输入其他退出)：");
+        System.out.println("1、新游戏 \t2、读取存档 \t ");
+        Scanner scanner = new Scanner(System.in);
+        String str = scanner.next();
+
+        // 根据输入选择开始新游戏开始读取存档，并设置isRestore布尔值
+        if(str.equals("1")){
+            Recorder.setIsRestored(false);
+        }
+        else if(str.equals("2")){
+            // 读取配置数据
+            Recorder.restore();
+            Recorder.setIsRestored(true);
+        }
+        else
+            System.exit(0);
+
         new TankWarGame().TankWarGameStart();
     }
     public void TankWarGameStart() throws IOException {
+
 
         // 初始化一个面板 添加到框架中，并设置尺寸和可见性
         tankPanel = new TankPanel();

@@ -32,25 +32,42 @@ public class TankPanel extends JPanel implements KeyListener, Runnable{
 
     // 面板构造函数，可以在里面放置一些初始化的内容；
     public TankPanel() throws IOException {
-        // 读取配置数据
-        Recorder.restore();
 
-        // 生成我方坦克
-        hero = new Tank(100,400, Orientation.UP,Color.yellow,1);
-        hero.setTanks(allTanks);
-        allTanks.add(hero);
-        // 生成敌方坦克
-        for(int i = 0; i < enemySize; i++){
-            // 建立敌方坦克并加入敌方坦克集合
-            Tank enemyTank = new Tank(i * 100,100, Orientation.DOWN,Color.CYAN,1);
-            enemyTank.setName(Integer.toString(i));
+        // 如果没有读取，则是新游戏，自己生成坦克
+        if(!Recorder.getIsRestored()) {
+            // 生成我方坦克
+            hero = new Tank(100, 400, Orientation.UP, Color.yellow, 1);
+            hero.setTanks(allTanks);
+            allTanks.add(hero);
+            // 生成敌方坦克
+            for (int i = 0; i < enemySize; i++) {
+                // 建立敌方坦克并加入敌方坦克集合
+                Tank enemyTank = new Tank(i * 100, 100, Orientation.DOWN, Color.CYAN, 1);
+                enemyTank.setName(Integer.toString(i));
 
-            enemyTanks.add(enemyTank);
-            allTanks.add(enemyTank);
+                enemyTanks.add(enemyTank);
+                allTanks.add(enemyTank);
 
-            enemyTank.setTanks(allTanks);
+                enemyTank.setTanks(allTanks);
 
-            new Thread(enemyTank).start();
+                new Thread(enemyTank).start();
+            }
+        }
+        // 否则从存档开始
+        else{
+            // 生成我方坦克
+            hero = Recorder.getHero();
+            allTanks.add(hero);
+            hero.setTanks(allTanks);
+            // 生成地方坦克
+            enemyTanks = Recorder.getEnemyTanks();
+            for (Tank enemyTank: enemyTanks) {
+
+                enemyTank.setTanks(allTanks);
+                allTanks.add(enemyTank);
+
+                new Thread(enemyTank).start();
+            }
         }
     }
 
@@ -72,8 +89,9 @@ public class TankPanel extends JPanel implements KeyListener, Runnable{
                     if(!enemyTanks.get(i).isLive){
                         //System.out.println("敌方坦克被击中");
                         Recorder.addShotEnemyTankNumber();
-                        enemyTanks.get(i).setBomb();
-                        bombs.add(enemyTanks.get(i).getBomb());
+
+                        Bomb bomb = new Bomb(enemyTanks.get(i));
+                        bombs.add(bomb);
 
                         allTanks.remove(enemyTanks.get(i));
                         enemyTanks.remove(enemyTanks.get(i));
@@ -89,7 +107,10 @@ public class TankPanel extends JPanel implements KeyListener, Runnable{
                         enemyTank.getBullets().get(j).hitTank(hero);
                         if (!hero.isLive) {
                             System.out.println("我方坦克被击中");
-                            hero.setBomb();
+
+                            Bomb bomb = new Bomb(hero);
+                            bombs.add(bomb);
+
                             allTanks.remove(hero);
                         }
                     }
@@ -121,10 +142,6 @@ public class TankPanel extends JPanel implements KeyListener, Runnable{
         //画出我方坦克 以及炸弹 如果有的话
         if(hero.isLive)
             drawTank(hero, g);
-        if(hero.getBomb() != null && hero.getBomb().isLive()) {
-            System.out.println("我方坦克爆炸");
-            drawBomb(hero.getBomb(), g);
-        }
 
         // 画出子弹，因为英雄坦克可能也有很多的子弹，所以这里是用这个
         if(hero.isLive) {
@@ -159,6 +176,7 @@ public class TankPanel extends JPanel implements KeyListener, Runnable{
             Bomb bomb = bombs.get(j);
             if(bomb.isLive())
                 drawBomb(bomb, g);
+            else bombs.remove(bomb);
         }
     }
     public void drawTank(Tank tank, Graphics g){

@@ -26,7 +26,7 @@ public class Tank implements Runnable, Serializable {
     private Bullet bullet = null;   //子弹 敌人的坦克可以有多颗子弹
     private Vector<Bullet> bullets = new Vector<>();   //子弹 敌人的坦克可以有多颗子弹
     public boolean isLive = true;   // 坦克是否存活
-    private Bomb bomb = null;       // 自己坦克的爆炸场景，初始化为空
+    // private Bomb bomb = null;       // 自己坦克的爆炸场景，初始化为空
     private Vector<Orientation> canNotMoveOrientations;   // 坦克不可以移动的方向
     private Vector<Tank> tanks;     // 所有坦克
 
@@ -144,13 +144,13 @@ public class Tank implements Runnable, Serializable {
     }
 
     // 炸弹
-    public void setBomb() {
+    /*public void setBomb() {
         bomb = new Bomb(this);
     }
 
     public Bomb getBomb() {
         return bomb;
-    }
+    }*/
 
     //射击行为，生成子弹并移动
     public void shot(){
@@ -368,7 +368,7 @@ public class Tank implements Runnable, Serializable {
         if (!Objects.equals(color, tank.color)) return false;
         if (!Objects.equals(bullet, tank.bullet)) return false;
         if (!Objects.equals(bullets, tank.bullets)) return false;
-        if (!Objects.equals(bomb, tank.bomb)) return false;
+        //if (!Objects.equals(bomb, tank.bomb)) return false;
         if (!Objects.equals(canNotMoveOrientations, tank.canNotMoveOrientations))
             return false;
         return Objects.equals(tanks, tank.tanks);
@@ -387,7 +387,7 @@ public class Tank implements Runnable, Serializable {
         result = 31 * result + (bullet != null ? bullet.hashCode() : 0);
         result = 31 * result + (bullets != null ? bullets.hashCode() : 0);
         result = 31 * result + (isLive ? 1 : 0);
-        result = 31 * result + (bomb != null ? bomb.hashCode() : 0);
+        //result = 31 * result + (bomb != null ? bomb.hashCode() : 0);
         result = 31 * result + (canNotMoveOrientations != null ? canNotMoveOrientations.hashCode() : 0);
         return result;
     }

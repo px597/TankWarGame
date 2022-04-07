@@ -20,6 +20,7 @@ public class Recorder {
     private static ObjectOutputStream oos =null;
     private static Tank hero = null;
     private static Vector<Tank> enemyTanks = new Vector<>();
+    private static boolean isRestored;
 
     public static int getShotEnemyTankNumber() {
         return shotEnemyTankNumber;
@@ -29,6 +30,12 @@ public class Recorder {
         Recorder.shotEnemyTankNumber += 1;
     }
 
+    public static void setIsRestored(boolean b){
+        isRestored = b;
+    }
+    public static boolean getIsRestored(){
+        return isRestored;
+    }
     public static Tank getHero() {
         return hero;
     }
